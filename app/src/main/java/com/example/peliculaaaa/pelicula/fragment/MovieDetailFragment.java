@@ -40,6 +40,7 @@ public class MovieDetailFragment extends Fragment {
     private TextView calificacion3;
     private TextView descripcionText;
     private ImageView imageView;
+    private ImageView BACK;
 
 
     public static MovieDetailFragment newInstance(String idmovie) {
@@ -76,6 +77,14 @@ public class MovieDetailFragment extends Fragment {
         calificacion2 = view.findViewById(R.id.calificacion2);
         calificacion3 = view.findViewById(R.id.calificacion3);
         descripcionText = view.findViewById(R.id.descripciontext);
+        BACK = view.findViewById(R.id.back);
+
+        BACK.setOnClickListener(v -> {
+            // Regresar a la pantalla anterior
+            requireActivity().onBackPressed();
+        });
+
+
         seacrhMovie(movie);
 
     }
