@@ -15,6 +15,7 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -46,6 +47,9 @@ public class MainActivity extends AppCompatActivity {
     private SlideAdapters slideAdapter;
     private List<SlideItems> slideItems = new ArrayList<>();
     private Handler slidehandler = new Handler();
+    private int page = 1; // Página inicial para la paginación
+    private boolean isLoading = false; // Para evitar cargar datos mientras ya estamos cargando
+    private List<Movies> allMovies = new ArrayList<>(); // Lista que acumula todas las películas
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -60,7 +64,7 @@ public class MainActivity extends AppCompatActivity {
 
         // Configurar RecyclerView
         recyclerView = findViewById(R.id.recyclerView);
-        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+        recyclerView.setLayoutManager(new GridLayoutManager(this, 3)); // 3 columnas para el RecyclerView
         movieAdapter = new MovieAdapter();
         recyclerView.setAdapter(movieAdapter);
 
@@ -75,7 +79,11 @@ public class MainActivity extends AppCompatActivity {
         // Observar los resultados de la API
         movieViewModel.getMovieSearchResults().observe(this, movies -> {
             if (movies != null && !movies.isEmpty()) {
-                movieAdapter.submitList(movies);
+                // Agregar las nuevas películas a la lista, evitando duplicados
+                addMoviesToList(movies);
+
+                // Actualizar el adaptador con la lista completa
+                movieAdapter.submitList(new ArrayList<>(allMovies)); // Notificar cambios al adaptador
 
                 // Llenar el slider con los pósters de las películas
                 slideItems.clear(); // Limpiar lista para evitar duplicados
@@ -83,8 +91,10 @@ public class MainActivity extends AppCompatActivity {
                     slideItems.add(new SlideItems(movie.getPosterUrl()));
                 }
                 slideAdapter.notifyDataSetChanged(); // Notificar cambios
+                page++;
+                Log.i("page", String.valueOf(page));
 
-                Log.i("Movie Results", "Número de películas: " + movies.size());
+                Log.i("Movie Results", "Número de películas: " + allMovies.size());
             } else {
                 Log.i("Movie Results", "No se encontraron películas.");
             }
@@ -92,16 +102,28 @@ public class MainActivity extends AppCompatActivity {
 
         // Realizar búsqueda inicial
         String searchQuery = "Batman";
-        int page = 1;
-        movieViewModel.searchMovies(searchQuery, page, new MovieRepository.MovieRepositoryCallback() {
-            @Override
-            public void onSuccess(List<Movies> movies) {
-                // Ya se está observando el LiveData, no es necesario actualizar aquí
-            }
+        loadMoreData(searchQuery); // Cargar los datos iniciales
 
+        // Configurar scroll listener para cargar más datos cuando el usuario llega al final
+        recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
-            public void onError(String errorMessage) {
-                Toast.makeText(MainActivity.this, "Error: " + errorMessage, Toast.LENGTH_SHORT).show();
+            public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
+                super.onScrolled(recyclerView, dx, dy);
+
+                // Verificar si hemos llegado al final del RecyclerView
+                GridLayoutManager layoutManager = (GridLayoutManager) recyclerView.getLayoutManager();
+                if (layoutManager != null) {
+                    int totalItemCount = layoutManager.getItemCount();
+                    int lastVisibleItemPosition = layoutManager.findLastVisibleItemPosition();
+
+                    // Si estamos cerca del final y no estamos cargando más datos
+                    if (!isLoading && lastVisibleItemPosition == totalItemCount - 1) {
+                        isLoading = true; // Marcar que estamos cargando
+
+                        // Cargar más datos
+                        loadMoreData(searchQuery);
+                    }
+                }
             }
         });
 
@@ -111,6 +133,50 @@ public class MainActivity extends AppCompatActivity {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
+    }
+
+    // Método para cargar más datos desde la API
+    private void loadMoreData(String searchQuery) {
+        movieViewModel.searchMovies(searchQuery, page, new MovieRepository.MovieRepositoryCallback() {
+            @Override
+            public void onSuccess(List<Movies> movies) {
+                if (movies != null && !movies.isEmpty()) {
+                    // Agregar las nuevas películas a la lista, evitando duplicados8
+
+                    // Actualizar la lista completa
+                    movieAdapter.submitList(new ArrayList<>(allMovies)); // Notificar cambios al adaptador
+
+
+
+                    isLoading = false; // Marcar que la carga ha terminado
+                }
+            }
+
+            @Override
+            public void onError(String errorMessage) {
+                isLoading = false;
+                Toast.makeText(MainActivity.this, "Error: " + errorMessage, Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    // Método para agregar películas a la lista, evitando duplicados
+    private void addMoviesToList(List<Movies> movies) {
+        for (Movies movie : movies) {
+            // Verificar si la película ya está en la lista
+            boolean alreadyExists = false;
+            for (Movies existingMovie : allMovies) {
+                if (existingMovie.getId().equals(movie.getId())) {
+                    alreadyExists = true;
+                    break;
+                }
+            }
+
+            // Si la película no está en la lista, agregarla
+            if (!alreadyExists) {
+                allMovies.add(movie);
+            }
+        }
     }
 
     private void initView() {
@@ -157,4 +223,5 @@ public class MainActivity extends AppCompatActivity {
         slidehandler.postDelayed(sliderRunnable, 2000);
     }
 }
+
 

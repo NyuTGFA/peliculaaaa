@@ -7,13 +7,15 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity"
     android:background="@color/maincolor">
+
+    <!-- ScrollView que envuelve todo el contenido -->
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_height="wrap_content"
             android:orientation="vertical">
 
             <EditText
@@ -28,23 +30,17 @@
                 android:drawablePadding="8dp"
                 android:padding="12dp"
                 android:hint="Buscar Peliculas..."
-                android:textColorHint="@color/white"
-               />
-            <androidx.constraintlayout.widget.ConstraintLayout
+                android:textColorHint="@color/white" />
+
+            <!-- ViewPager2 para banners -->
+            <androidx.viewpager2.widget.ViewPager2
+                android:id="@+id/viewpageslider"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content">
+                android:layout_height="500dp"
+                android:visibility="gone"
+            android:layout_marginTop="16dp"/>
 
-                <androidx.viewpager2.widget.ViewPager2
-                    android:id="@+id/viewpageslider"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toTopOf="parent"/>
-
-
-            </androidx.constraintlayout.widget.ConstraintLayout>
+            <!-- Texto que muestra los resultados -->
             <TextView
                 android:id="@+id/textviewResultados"
                 android:layout_width="match_parent"
@@ -54,29 +50,17 @@
                 android:textStyle="bold"
                 android:textSize="18sp"
                 android:layout_marginStart="16dp"
-                android:layout_marginTop="24dp"
-                android:layout_marginBottom="12dp"/>
+                android:layout_marginTop="24dp"/>
 
-
-            <androidx.constraintlayout.widget.ConstraintLayout
+            <!-- RecyclerView que contiene las películas -->
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/recyclerView"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent">
-                <androidx.recyclerview.widget.RecyclerView
-                    android:id="@+id/recyclerView"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:padding="16dp"
-                    android:layout_marginTop="16dp"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toTopOf="parent"/>
-            </androidx.constraintlayout.widget.ConstraintLayout>
-
+                android:layout_height="wrap_content"
+            android:padding="1dp"
+            android:layout_marginTop="8dp"/>
         </LinearLayout>
 
-
     </ScrollView>
-
 
 </androidx.constraintlayout.widget.ConstraintLayout>

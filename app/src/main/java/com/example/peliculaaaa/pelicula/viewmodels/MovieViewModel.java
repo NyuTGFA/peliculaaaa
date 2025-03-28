@@ -43,6 +43,20 @@ public class MovieViewModel extends AndroidViewModel {
             }
         });
     }
+    public void searchMovies(String query, int page) {
+        movieRepository.searchMovies(query, page, new MovieRepository.MovieRepositoryCallback() {
+            @Override
+            public void onSuccess(List<Movies> movies) {
+                movieSearchResults.postValue(movies);   // Actualiza el LiveData
+            }
+
+            @Override
+            public void onError(String error) {
+                // Aquí puedes manejar el error si es necesario
+            }
+        });
+    }
+
 }
 
 
