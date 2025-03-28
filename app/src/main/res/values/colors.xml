@@ -5,5 +5,8 @@
     <color name ="fondo"> </color>
     <color name="maincolor">#1F1D28</color>
     <color name="orange">#FF7427</color>
+    <color name="darckblue">#252836</color>
+    <color name="yellow">#ffdf00</color>
+
 
 </resources>
