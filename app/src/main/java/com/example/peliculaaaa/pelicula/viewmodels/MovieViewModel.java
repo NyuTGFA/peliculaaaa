@@ -37,6 +37,7 @@ public class MovieViewModel extends AndroidViewModel {
         movieRepository.searchMovies(query, page, new MovieRepository.MovieRepositoryCallback() {
             @Override
             public void onSuccess(List<Movies> movies) {
+
                 movieSearchResults.postValue(movies);   // Actualiza el LiveData
             }
 
@@ -53,6 +54,7 @@ public class MovieViewModel extends AndroidViewModel {
 
             @Override
             public void onSuccess(MovieDetailResponse movie) {
+                Log.d("MovieDetail", "Movie received: " + movie);
                 movieseachdetail.postValue(movie);
             }
 

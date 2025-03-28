@@ -81,22 +81,30 @@ public class MovieRepository {
             });
         });
     }
-    public void getMovieById(String movieId, MovieDetailCallback  callback) {
+    public void getMovieById(String movieId, MovieDetailCallback callback) {
         String apiKey = ApiConfig.getApiKey();
 
         apiService.searchMoviesbyid(apiKey, movieId).enqueue(new Callback<MovieDetailResponse>() {
 
             @Override
             public void onResponse(Call<MovieDetailResponse> call, Response<MovieDetailResponse> response) {
-
+                if (response.isSuccessful() && response.body() != null) {
+                    // Notificar al callback que la respuesta fue exitosa
+                    callback.onSuccess(response.body());
+                } else {
+                    // Manejar el caso cuando la respuesta no fue exitosa
+                    callback.onError("Error al obtener los detalles de la película");
+                }
             }
 
             @Override
             public void onFailure(Call<MovieDetailResponse> call, Throwable t) {
-
+                // Manejar el error de la solicitud
+                callback.onError(t.getMessage());
             }
         });
     }
+
 
     public interface MovieDetailCallback {
         void onSuccess(MovieDetailResponse movie);

@@ -6,6 +6,7 @@ import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.view.View;
+import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
 import android.widget.Toast;
 
@@ -82,23 +83,26 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.OnMo
         // Buscar películas cuando el texto cambia en el EditText
         editTextSearch = findViewById(R.id.edit_text_search);
         editTextSearch.setText(defaultSearchQuery); // Inicializar con la búsqueda predeterminada
-        editTextSearch.addTextChangedListener(new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence charSequence, int start, int count, int after) {}
-
-            @Override
-            public void onTextChanged(CharSequence charSequence, int start, int before, int count) {
-                String query = charSequence.toString();
-                if (query.isEmpty()) {
-                    return; // Si el EditText está vacío, no hacer nada
+        editTextSearch.setOnEditorActionListener((v, actionId, event) -> {
+            if (actionId == EditorInfo.IME_ACTION_SEARCH || actionId == EditorInfo.IME_ACTION_DONE) {
+                String query = editTextSearch.getText().toString().trim();
+                if (!query.isEmpty()) {
+                    searchMovies(query);
                 }
-                clear= true;
-                searchMovies(query); // Realizar búsqueda cuando el texto cambia
+                return true; // Indicar que el evento fue manejado
             }
-
-            @Override
-            public void afterTextChanged(Editable editable) {}
+            return false;
         });
+
+        editTextSearch.setOnFocusChangeListener((v, hasFocus) -> {
+            if (!hasFocus) { // Si el usuario salió del campo
+                String query = editTextSearch.getText().toString().trim();
+                if (!query.isEmpty()) {
+                    searchMovies(query);
+                }
+            }
+        });
+
 
         // Configurar ViewModel para observar resultados
         movieViewModel.getMovieSearchResults().observe(this, movies -> {
