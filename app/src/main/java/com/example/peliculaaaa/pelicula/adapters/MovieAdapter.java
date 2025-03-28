@@ -17,8 +17,11 @@ import com.example.peliculaaaa.pelicula.models.Movies;
 
 public class MovieAdapter extends ListAdapter<Movies, MovieAdapter.MovieViewHolder> {
 
-    public MovieAdapter() {
+    private final OnMovieClickListener onMovieClickListener;
+
+    public MovieAdapter(OnMovieClickListener onMovieClickListener) {
         super(new MovieDiffCallback());
+        this.onMovieClickListener = onMovieClickListener;
     }
 
     @NonNull
@@ -41,8 +44,14 @@ public class MovieAdapter extends ListAdapter<Movies, MovieAdapter.MovieViewHold
             Glide.with(holder.itemView.getContext())
                     .load(posterUrl)
                     .into(holder.posterImageView);
-        } else {
         }
+
+        // Manejar el clic en el ítem
+        holder.itemView.setOnClickListener(v -> {
+            if (onMovieClickListener != null) {
+                onMovieClickListener.onMovieClick(movie);
+            }
+        });
     }
 
     static class MovieViewHolder extends RecyclerView.ViewHolder {
@@ -69,5 +78,10 @@ public class MovieAdapter extends ListAdapter<Movies, MovieAdapter.MovieViewHold
         public boolean areContentsTheSame(@NonNull Movies oldItem, @NonNull Movies newItem) {
             return oldItem.equals(newItem); // Compara los contenidos de los elementos
         }
+    }
+
+    // Interfaz para manejar los clics
+    public interface OnMovieClickListener {
+        void onMovieClick(Movies movie);
     }
 }

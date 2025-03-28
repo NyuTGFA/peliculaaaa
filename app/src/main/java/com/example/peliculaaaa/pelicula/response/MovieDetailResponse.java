@@ -50,7 +50,7 @@ public class MovieDetailResponse {
     private String poster;
 
     @SerializedName("Ratings")
-    private List<Rating> ratings;
+    private List<Ranting> ratings;
 
     @SerializedName("Metascore")
     private String metascore;
@@ -195,11 +195,11 @@ public class MovieDetailResponse {
         this.poster = poster;
     }
 
-    public List<Rating> getRatings() {
+    public List<Ranting> getRatings() {
         return ratings;
     }
 
-    public void setRatings(List<Rating> ratings) {
+    public void setRatings(List<Ranting> ratings) {
         this.ratings = ratings;
     }
 

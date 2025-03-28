@@ -10,6 +10,7 @@ import com.example.peliculaaaa.pelicula.Data.Database.MovieDatabase;
 import com.example.peliculaaaa.pelicula.models.Movies;
 import com.example.peliculaaaa.pelicula.network.ApiClient;
 import com.example.peliculaaaa.pelicula.network.ApiService;
+import com.example.peliculaaaa.pelicula.response.MovieDetailResponse;
 import com.example.peliculaaaa.pelicula.response.MovieResponse;
 import com.example.peliculaaaa.pelicula.utils.ApiConfig;
 
@@ -45,7 +46,6 @@ public class MovieRepository {
         // Realizar la consulta en un hilo en segundo plano
         apiService = ApiClient.getClient().create(ApiService.class);
         executor.execute(() -> {
-            movieDao.deleteAllMovies();
             // Intentar obtener las películas de la base de datos
             List<Movies> cachedMovies = movieDao.getMoviesByTitle();
             if (cachedMovies != null && !cachedMovies.isEmpty()) {
@@ -55,7 +55,7 @@ public class MovieRepository {
 
             String apiKey = ApiConfig.getApiKey();
             // Realizar la búsqueda en la API
-            apiService.searchMovies("f88925d4",searchQuery,page).enqueue(new Callback<MovieResponse>() {
+            apiService.searchMovies(apiKey,searchQuery,page).enqueue(new Callback<MovieResponse>() {
                 @Override
                 public void onResponse(Call<MovieResponse> call, Response<MovieResponse> response) {
                     if (response.body() != null && response.body().getMovies() != null) {
@@ -81,6 +81,28 @@ public class MovieRepository {
             });
         });
     }
+    public void getMovieById(String movieId, MovieDetailCallback  callback) {
+        String apiKey = ApiConfig.getApiKey();
+
+        apiService.searchMoviesbyid(apiKey, movieId).enqueue(new Callback<MovieDetailResponse>() {
+
+            @Override
+            public void onResponse(Call<MovieDetailResponse> call, Response<MovieDetailResponse> response) {
+
+            }
+
+            @Override
+            public void onFailure(Call<MovieDetailResponse> call, Throwable t) {
+
+            }
+        });
+    }
+
+    public interface MovieDetailCallback {
+        void onSuccess(MovieDetailResponse movie);
+        void onError(String errorMessage);
+    }
+
 
     // Interfaz para el callback
     public interface MovieRepositoryCallback {

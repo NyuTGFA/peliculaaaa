@@ -11,12 +11,14 @@ import androidx.lifecycle.ViewModel;
 
 import com.example.peliculaaaa.pelicula.models.Movies;
 import com.example.peliculaaaa.pelicula.repositories.MovieRepository;
+import com.example.peliculaaaa.pelicula.response.MovieDetailResponse;
 
 import java.util.List;
 
 public class MovieViewModel extends AndroidViewModel {
 
     private MutableLiveData<List<Movies>> movieSearchResults = new MutableLiveData<>();
+    private MutableLiveData<MovieDetailResponse> movieseachdetail= new MutableLiveData<>();
     private MovieRepository movieRepository;
 
     public MovieViewModel(Application application) {
@@ -28,6 +30,7 @@ public class MovieViewModel extends AndroidViewModel {
     public LiveData<List<Movies>> getMovieSearchResults() {
         return movieSearchResults;
     }
+    public LiveData <MovieDetailResponse> getmovieDetail(){return movieseachdetail;}
 
     // Método para buscar películas
     public void searchMovies(String query, int page, MovieRepository.MovieRepositoryCallback callback) {
@@ -43,19 +46,25 @@ public class MovieViewModel extends AndroidViewModel {
             }
         });
     }
-    public void searchMovies(String query, int page) {
-        movieRepository.searchMovies(query, page, new MovieRepository.MovieRepositoryCallback() {
+
+    public void searchMovieDetail(String id){
+        movieRepository.getMovieById(id,new MovieRepository.MovieDetailCallback (){
+
+
             @Override
-            public void onSuccess(List<Movies> movies) {
-                movieSearchResults.postValue(movies);   // Actualiza el LiveData
+            public void onSuccess(MovieDetailResponse movie) {
+                movieseachdetail.postValue(movie);
             }
 
             @Override
-            public void onError(String error) {
-                // Aquí puedes manejar el error si es necesario
+            public void onError(String errorMessage) {
+
             }
         });
+
+
     }
+
 
 }
 

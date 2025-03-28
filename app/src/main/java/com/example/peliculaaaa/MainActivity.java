@@ -24,6 +24,7 @@ import androidx.viewpager2.widget.ViewPager2;
 
 import com.example.peliculaaaa.pelicula.adapters.MovieAdapter;
 import com.example.peliculaaaa.pelicula.adapters.SlideAdapters;
+import com.example.peliculaaaa.pelicula.fragment.MovieDetailFragment;
 import com.example.peliculaaaa.pelicula.models.Movies;
 import com.example.peliculaaaa.pelicula.models.SlideItems;
 import com.example.peliculaaaa.pelicula.repositories.MovieRepository;
@@ -34,7 +35,7 @@ import com.example.peliculaaaa.pelicula.viewmodels.MovieViewModelFactory;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements MovieAdapter.OnMovieClickListener{
 
     private MovieViewModel movieViewModel;
     private RecyclerView recyclerView;
@@ -63,7 +64,7 @@ public class MainActivity extends AppCompatActivity {
         // Configurar RecyclerView
         recyclerView = findViewById(R.id.recyclerView);
         recyclerView.setLayoutManager(new GridLayoutManager(this, 3)); // 3 columnas para el RecyclerView
-        movieAdapter = new MovieAdapter();
+        movieAdapter = new MovieAdapter(this);
         recyclerView.setAdapter(movieAdapter);
 
         // Configurar ViewPager2
@@ -198,6 +199,17 @@ public class MainActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         slidehandler.postDelayed(sliderRunnable, 2000);
+    }
+
+    @Override
+    public void onMovieClick(Movies movie) {
+        MovieDetailFragment movieDetailFragment = MovieDetailFragment.newInstance(movie.getId());
+
+        // Iniciar la transacción para mostrar el fragmento de detalles
+        getSupportFragmentManager().beginTransaction()
+                .replace(android.R.id.content, movieDetailFragment)
+                .addToBackStack(null)  // Esto permite que el fragmento de detalle sea visible en el historial de back
+                .commit();
     }
 }
 

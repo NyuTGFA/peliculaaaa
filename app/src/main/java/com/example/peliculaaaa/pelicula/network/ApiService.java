@@ -1,6 +1,7 @@
 package com.example.peliculaaaa.pelicula.network;
 
 import com.example.peliculaaaa.pelicula.models.Movies;
+import com.example.peliculaaaa.pelicula.response.MovieDetailResponse;
 import com.example.peliculaaaa.pelicula.response.MovieResponse;
 
 import retrofit2.Call;
@@ -26,6 +27,10 @@ public interface ApiService {
         Call<MovieResponse> searchMovies(   @Query("apikey") String apiKey,
                                             @Query("s") String searchQuery,
                                             @Query("page") int page);
+
+        @GET("/")
+        Call<MovieDetailResponse> searchMoviesbyid(@Query("apikey") String apiKey,
+                                                   @Query("i") String searchQuery);
 
 }
 
