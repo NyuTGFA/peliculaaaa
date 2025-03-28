@@ -45,6 +45,7 @@ public class MovieRepository {
         // Realizar la consulta en un hilo en segundo plano
         apiService = ApiClient.getClient().create(ApiService.class);
         executor.execute(() -> {
+            movieDao.deleteAllMovies();
             // Intentar obtener las películas de la base de datos
             List<Movies> cachedMovies = movieDao.getMoviesByTitle();
             if (cachedMovies != null && !cachedMovies.isEmpty()) {
@@ -54,7 +55,7 @@ public class MovieRepository {
 
             String apiKey = ApiConfig.getApiKey();
             // Realizar la búsqueda en la API
-            apiService.searchMovies(apiKey,searchQuery,page).enqueue(new Callback<MovieResponse>() {
+            apiService.searchMovies("f88925d4",searchQuery,page).enqueue(new Callback<MovieResponse>() {
                 @Override
                 public void onResponse(Call<MovieResponse> call, Response<MovieResponse> response) {
                     if (response.body() != null && response.body().getMovies() != null) {

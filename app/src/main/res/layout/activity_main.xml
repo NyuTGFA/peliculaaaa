@@ -29,6 +29,7 @@
                 android:layout_margin="16dp"
                 android:drawablePadding="8dp"
                 android:padding="12dp"
+                android:textColor="@color/white"
                 android:hint="Buscar Peliculas..."
                 android:textColorHint="@color/white" />
 

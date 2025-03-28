@@ -1,11 +1,12 @@
 package com.example.peliculaaaa;
 
-
-
 import android.os.Bundle;
 import android.os.Handler;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.view.View;
+import android.widget.EditText;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
@@ -16,8 +17,10 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.GridLayoutManager;
-import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.viewpager2.widget.CompositePageTransformer;
+import androidx.viewpager2.widget.MarginPageTransformer;
+import androidx.viewpager2.widget.ViewPager2;
 
 import com.example.peliculaaaa.pelicula.adapters.MovieAdapter;
 import com.example.peliculaaaa.pelicula.adapters.SlideAdapters;
@@ -27,16 +30,9 @@ import com.example.peliculaaaa.pelicula.repositories.MovieRepository;
 import com.example.peliculaaaa.pelicula.utils.ApiConfig;
 import com.example.peliculaaaa.pelicula.viewmodels.MovieViewModel;
 import com.example.peliculaaaa.pelicula.viewmodels.MovieViewModelFactory;
-import com.google.android.material.slider.Slider;
 
 import java.util.ArrayList;
 import java.util.List;
-import androidx.lifecycle.Observer;
-import androidx.viewpager2.widget.CompositePageTransformer;
-import androidx.viewpager2.widget.MarginPageTransformer;
-import androidx.viewpager2.widget.ViewPager2;
-
-import kotlin.Result;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -47,9 +43,11 @@ public class MainActivity extends AppCompatActivity {
     private SlideAdapters slideAdapter;
     private List<SlideItems> slideItems = new ArrayList<>();
     private Handler slidehandler = new Handler();
-    private int page = 1; // Página inicial para la paginación
-    private boolean isLoading = false; // Para evitar cargar datos mientras ya estamos cargando
-    private List<Movies> allMovies = new ArrayList<>(); // Lista que acumula todas las películas
+    private int page = 1;
+    private boolean isLoading = false;
+    private List<Movies> allMovies = new ArrayList<>();
+    private EditText editTextSearch;
+    private Boolean clear=false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -76,54 +74,37 @@ public class MainActivity extends AppCompatActivity {
         MovieViewModelFactory factory = new MovieViewModelFactory(getApplication());
         movieViewModel = new ViewModelProvider(this, factory).get(MovieViewModel.class);
 
-        // Observar los resultados de la API
-        movieViewModel.getMovieSearchResults().observe(this, movies -> {
-            if (movies != null && !movies.isEmpty()) {
-                // Agregar las nuevas películas a la lista, evitando duplicados
-                addMoviesToList(movies);
+        // Realizar la búsqueda predeterminada
+        String defaultSearchQuery = "Batman"; // O cualquier término predeterminado
+        searchMovies(defaultSearchQuery);
 
-                // Actualizar el adaptador con la lista completa
-                movieAdapter.submitList(new ArrayList<>(allMovies)); // Notificar cambios al adaptador
+        // Buscar películas cuando el texto cambia en el EditText
+        editTextSearch = findViewById(R.id.edit_text_search);
+        editTextSearch.setText(defaultSearchQuery); // Inicializar con la búsqueda predeterminada
+        editTextSearch.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence charSequence, int start, int count, int after) {}
 
-                // Llenar el slider con los pósters de las películas
-                slideItems.clear(); // Limpiar lista para evitar duplicados
-                for (Movies movie : movies) {
-                    slideItems.add(new SlideItems(movie.getPosterUrl()));
+            @Override
+            public void onTextChanged(CharSequence charSequence, int start, int before, int count) {
+                String query = charSequence.toString();
+                if (query.isEmpty()) {
+                    return; // Si el EditText está vacío, no hacer nada
                 }
-                slideAdapter.notifyDataSetChanged(); // Notificar cambios
-                page++;
-                Log.i("page", String.valueOf(page));
-
-                Log.i("Movie Results", "Número de películas: " + allMovies.size());
-            } else {
-                Log.i("Movie Results", "No se encontraron películas.");
+                clear= true;
+                searchMovies(query); // Realizar búsqueda cuando el texto cambia
             }
+
+            @Override
+            public void afterTextChanged(Editable editable) {}
         });
 
-        // Realizar búsqueda inicial
-        String searchQuery = "Batman";
-        loadMoreData(searchQuery); // Cargar los datos iniciales
-
-        // Configurar scroll listener para cargar más datos cuando el usuario llega al final
-        recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
-            @Override
-            public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
-                super.onScrolled(recyclerView, dx, dy);
-
-                // Verificar si hemos llegado al final del RecyclerView
-                GridLayoutManager layoutManager = (GridLayoutManager) recyclerView.getLayoutManager();
-                if (layoutManager != null) {
-                    int totalItemCount = layoutManager.getItemCount();
-                    int lastVisibleItemPosition = layoutManager.findLastVisibleItemPosition();
-
-                    // Si estamos cerca del final y no estamos cargando más datos
-                    if (!isLoading && lastVisibleItemPosition == totalItemCount - 1) {
-                        isLoading = true; // Marcar que estamos cargando
-
-                        // Cargar más datos
-                        loadMoreData(searchQuery);
-                    }
-                }
+        // Configurar ViewModel para observar resultados
+        movieViewModel.getMovieSearchResults().observe(this, movies -> {
+            if (movies != null && !movies.isEmpty()) {
+                addMoviesToList(movies); // Agregar películas a la lista
+                movieAdapter.submitList(new ArrayList<>(allMovies)); // Actualizar el RecyclerView
+                updateBannerSlider(movies); // Actualizar el slider
             }
         });
 
@@ -135,26 +116,22 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    // Método para cargar más datos desde la API
-    private void loadMoreData(String searchQuery) {
-        movieViewModel.searchMovies(searchQuery, page, new MovieRepository.MovieRepositoryCallback() {
+    // Método para realizar la búsqueda de películas
+    private void searchMovies(String query) {
+        page = 1; // Reiniciar la página para nuevas búsquedas
+        allMovies.clear();
+        // Limpiar la lista de películas anteriores
+        movieViewModel.searchMovies(query, page, new MovieRepository.MovieRepositoryCallback() {
             @Override
             public void onSuccess(List<Movies> movies) {
                 if (movies != null && !movies.isEmpty()) {
-                    // Agregar las nuevas películas a la lista, evitando duplicados8
-
-                    // Actualizar la lista completa
-                    movieAdapter.submitList(new ArrayList<>(allMovies)); // Notificar cambios al adaptador
-
-
-
-                    isLoading = false; // Marcar que la carga ha terminado
+                  // Agregar películas a la lista
+                    movieAdapter.submitList(new ArrayList<>(allMovies)); // Notificar al adaptador
                 }
             }
 
             @Override
             public void onError(String errorMessage) {
-                isLoading = false;
                 Toast.makeText(MainActivity.this, "Error: " + errorMessage, Toast.LENGTH_SHORT).show();
             }
         });
@@ -163,28 +140,28 @@ public class MainActivity extends AppCompatActivity {
     // Método para agregar películas a la lista, evitando duplicados
     private void addMoviesToList(List<Movies> movies) {
         for (Movies movie : movies) {
-            // Verificar si la película ya está en la lista
-            boolean alreadyExists = false;
-            for (Movies existingMovie : allMovies) {
-                if (existingMovie.getId().equals(movie.getId())) {
-                    alreadyExists = true;
-                    break;
-                }
-            }
-
-            // Si la película no está en la lista, agregarla
-            if (!alreadyExists) {
-                allMovies.add(movie);
+            if (!allMovies.contains(movie)) {
+                allMovies.add(movie); // Agregar solo si no está duplicada
             }
         }
     }
 
+    private void updateBannerSlider(List<Movies> movies) {
+        slideItems.clear();
+        for (Movies movie : movies) {
+            slideItems.add(new SlideItems(movie.getPosterUrl())); // Actualizar los pósters en el slider
+        }
+        slideAdapter.notifyDataSetChanged(); // Notificar al adaptador
+    }
+
+    // Método para configurar el ViewPager2
     private void initView() {
         viewPager2 = findViewById(R.id.viewpageslider);
         slideAdapter = new SlideAdapters(slideItems, viewPager2);
         viewPager2.setAdapter(slideAdapter);
     }
 
+    // Configuración del slider de banners
     private void setupBannerSlider() {
         viewPager2.setOffscreenPageLimit(3);
         viewPager2.getChildAt(0).setOverScrollMode(RecyclerView.OVER_SCROLL_ALWAYS);
@@ -223,5 +200,4 @@ public class MainActivity extends AppCompatActivity {
         slidehandler.postDelayed(sliderRunnable, 2000);
     }
 }
-
 
